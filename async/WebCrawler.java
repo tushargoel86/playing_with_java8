@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,10 +28,10 @@ public class WebCrawler {
 	
 	private static Set<String> withoutUsingFuture(List<String> websites) {	
 		 return websites.stream()
-						.map(WebCrawler :: getDocument)
-						.map(WebCrawler :: processDocument)
-						.flatMap(urls -> urls.stream().map(i -> i))
-						.collect(Collectors.toSet());
+			        .map(WebCrawler :: getDocument)
+				.map(WebCrawler :: processDocument)
+				.flatMap(urls -> urls.stream())
+				.collect(Collectors.toSet());
 	}
 	
 	private static Set<String> usingFuture(List<String> websites) throws InterruptedException, ExecutionException {
@@ -40,24 +39,24 @@ public class WebCrawler {
 				.stream()
 				.map(site -> CompletableFuture.supplyAsync(() -> getDocument(site)))
 				.map(document -> document
-								  .thenApply(WebCrawler :: processDocument)
-								  .exceptionally(th -> new HashSet()))
+						  .thenApply(WebCrawler :: processDocument)
+						  .exceptionally(th -> new HashSet()))
 				.collect(Collectors.toList());
 			
 			
 			//returns when all futures either completed or exception throws
 			CompletableFuture<Void> completedFuture = CompletableFuture
-														.allOf(futureTasks.toArray(
-																new CompletableFuture[futureTasks.size()]));
+										.allOf(futureTasks.toArray(
+										new CompletableFuture[futureTasks.size()]));
 			
 			
 			// we need to get list of urls instead void.
 			CompletableFuture<Set<String>> result = completedFuture
 				.thenApply(v -> futureTasks
-										.stream()
-										.map(future -> future.join())
-										.flatMap(list -> list.stream().map(m -> m))
-										.collect(Collectors.toSet())
+							.stream()
+							.map(future -> future.join())
+							.flatMap(list -> list.stream())
+							.collect(Collectors.toSet())
 						  );
 			
 			// here is the result
@@ -73,11 +72,11 @@ public class WebCrawler {
 	
 	private static List<String> usingStream(String ...sites) {
 		return Arrays.asList(sites)
-                .stream()
-                .map(WebCrawler :: getDocument)
-                .map(doc -> doc.select("a"))
-                .flatMap(elements -> elements.stream().map(element -> element.attr("abs:href")))
-                .collect(Collectors.toList());
+					.stream()
+					.map(WebCrawler :: getDocument)
+					.map(doc -> doc.select("a"))
+					.flatMap(elements -> elements.stream().map(element -> element.attr("abs:href")))
+					.collect(Collectors.toList());
 	}
 	
 	private static Document getDocument(String site)  {
